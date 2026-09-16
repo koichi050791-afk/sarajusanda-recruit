@@ -1,0 +1,94 @@
+name: Security Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Block sensitive files from Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad="$(git ls-files | grep -E '(^|/)(\.env($|\.)|[^/]*\.pem$|[^/]*\.key$|id_rsa$|credentials[^/]*\.json$)' || true)"
+          if [ -n "$bad" ]; then
+            echo "Sensitive-looking files are tracked:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Block private key material
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -I -n -E -- '-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----' -- .; then
+            echo "Private key material detected."
+            exit 1
+          fi
+
+      - name: Check common leaked token patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          patterns='gh[pousr]_[A-Za-z0-9]{36,}|AIza[0-9A-Za-z_-]{35}|sk-[A-Za-z0-9_-]{20,}'
+          if git grep -I -n -E "$patterns" -- . ':!*.md'; then
+            echo "Possible credential/token detected. Review before publishing."
+            exit 1
+          fi
+
+      - name: Verify Cloudflare Pages security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          file='_headers'
+          test -f "$file"
+          grep -q 'Content-Security-Policy:' "$file"
+          grep -q 'X-Content-Type-Options: nosniff' "$file"
+          grep -q 'X-Frame-Options: DENY' "$file"
+          grep -q 'Referrer-Policy:' "$file"
+          grep -q 'Permissions-Policy:' "$file"
+          grep -q 'Strict-Transport-Security:' "$file"
+
+      - name: Verify entry page exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+
+  production-smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live HTTPS and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://sarajusanda-recruit.pages.dev/'
+          ok=0
+          for attempt in $(seq 1 12); do
+            headers="$(curl -sSIL --max-time 20 "$url" || true)"
+            if echo "$headers" | grep -qi '^HTTP/.* 200' \
+              && echo "$headers" | grep -qi '^content-security-policy:' \
+              && echo "$headers" | grep -qi '^x-content-type-options:' \
+              && echo "$headers" | grep -qi '^x-frame-options:' \
+              && echo "$headers" | grep -qi '^referrer-policy:' \
+              && echo "$headers" | grep -qi '^permissions-policy:' \
+              && echo "$headers" | grep -qi '^strict-transport-security:'; then
+              ok=1
+              break
+            fi
+            echo "Waiting for production deployment... attempt $attempt/12"
+            sleep 15
+          done
+          test "$ok" -eq 1
