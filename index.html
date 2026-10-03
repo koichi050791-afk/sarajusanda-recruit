@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>美容師求人｜SARAJU三田店｜復帰・転職・地元での働き方を応募前に相談</title>
+<title>三田市の美容師求人｜SARAJU三田店｜復帰・転職を応募前に相談</title>
 <meta name="description" content="兵庫県三田市けやき台のSARAJU三田店スタイリスト採用サイト。ブランクから美容師に戻りたい方、今の働き方を変えたい方、三田で働きたい方へ。マンツーマン施術、正社員・業務委託。いきなり応募せず、LINEで相談・サロン見学から確認できます。">
 <link rel="canonical" href="https://sarajusanda-recruit.pages.dev/">
 <meta property="og:title" content="美容師求人｜SARAJU三田店">
@@ -169,14 +169,13 @@ summary{padding:20px 0;font:500 17px "Yu Mincho",serif;cursor:pointer}
 <main id="top">
 <section class="hero">
   <div class="hero-copy">
-    <div class="eye">SARAJU SANDA RECRUIT</div>
+    <div class="eye">三田市けやき台｜SARAJU三田店｜スタイリスト求人</div>
     <h1>美容師に戻ろうかな。<br>今の働き方を<br>変えようかな。</h1>
     <div class="hero-sub">三田で、まず「働き方を知る」ところから。</div>
     <p>ブランクがある。子育てとの両立が気になる。今のサロンの働き方を変えたい。神戸や大阪まで通うより、生活に近い場所で美容師を続けたい。まだ応募を決めていなくても大丈夫です。</p>
     <div class="actions">
       <a class="btn" href="https://lin.ee/NTAq85Q" data-cta="hero-consult">応募前にLINEで聞いてみる</a>
       <a class="btn sub" href="https://lin.ee/NTAq85Q" data-cta="hero-visit">サロン見学を相談する</a>
-      <a class="btn sub" href="https://www.instagram.com/saraju_sanda_recruit" target="_blank" rel="noopener" data-cta="hero-instagram">Instagramで雰囲気を見る</a>
     </div>
     <div class="microcopy">いきなり応募する必要はありません。条件や働き方を確認してから判断してください。</div>
   </div>
@@ -429,12 +428,14 @@ document.addEventListener('DOMContentLoaded',function(){
       var label=(link.textContent||'').trim();
       var cta=link.dataset.cta||'';
       var isVisit=label.indexOf('見学')!==-1;
-      gtag('event',isVisit?'salon_visit_click':'line_click',{
+      gtag('event','line_click',{
         link_text:label,
         cta_name:cta,
+        consultation_type:isVisit?'salon_visit':'general',
         link_url:link.href,
         page_location:location.href
       });
+      if(isVisit){gtag('event','salon_visit_click',{cta_name:cta,page_location:location.href});}
     });
   });
   document.querySelectorAll('a[href*="instagram.com/saraju_sanda_recruit"]').forEach(function(link){
