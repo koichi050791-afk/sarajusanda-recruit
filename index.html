@@ -15,7 +15,14 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-180LHJPWHM"></script>
 <script>
 window.dataLayer=window.dataLayer||[];
-function gtag(){dataLayer.push(arguments)}
+var recruitQaMode=false;
+try {
+  var qa=new URLSearchParams(location.search).get('qa');
+  if(qa==='1') sessionStorage.setItem('recruit_qa_mode','1');
+  if(qa==='0') sessionStorage.removeItem('recruit_qa_mode');
+  recruitQaMode=sessionStorage.getItem('recruit_qa_mode')==='1';
+} catch(e) {}
+function gtag(){if(!recruitQaMode)dataLayer.push(arguments)}
 gtag('js',new Date());
 gtag('config','G-180LHJPWHM');
 </script>
@@ -431,11 +438,12 @@ document.addEventListener('DOMContentLoaded',function(){
       gtag('event','line_click',{
         link_text:label,
         cta_name:cta,
+        cta_location:cta,
         consultation_type:isVisit?'salon_visit':'general',
         link_url:link.href,
         page_location:location.href
       });
-      if(isVisit){gtag('event','salon_visit_click',{cta_name:cta,page_location:location.href});}
+      if(isVisit){gtag('event','salon_visit_click',{cta_name:cta,cta_location:cta,page_location:location.href});}
     });
   });
   document.querySelectorAll('a[href*="instagram.com/saraju_sanda_recruit"]').forEach(function(link){
